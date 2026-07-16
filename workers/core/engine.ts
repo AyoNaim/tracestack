@@ -9,6 +9,9 @@ import type {
   WorkerStatus,
 } from "../protocol/types";
 
+import { Scheduler } from "./scheduler";
+import { RequestGenerator } from "../simulation/request-generator";
+
 export class WorkerEngine {
   /**
    * The DedicatedWorkerGlobalScope ("self").
@@ -25,6 +28,18 @@ export class WorkerEngine {
     paused: false,
     throughput: "medium",
   };
+
+  /**
+   * Generates simulated backend requests.
+   */
+  private readonly requestGenerator = new RequestGenerator();
+
+  /**
+   * Controls the heartbeat of the worker.
+   */
+  private readonly scheduler = new Scheduler(() => {
+    this.onTick();
+  });
 
   constructor(worker: DedicatedWorkerGlobalScope) {
     this.worker = worker;
@@ -48,6 +63,8 @@ export class WorkerEngine {
     this.status.running = true;
     this.status.paused = false;
 
+    this.scheduler.start();
+
     this.publishStatus();
   }
 
@@ -56,6 +73,8 @@ export class WorkerEngine {
    */
   public stop(): void {
     if (!this.status.running) return;
+
+    this.scheduler.stop();
 
     this.status.running = false;
     this.status.paused = false;
@@ -69,6 +88,8 @@ export class WorkerEngine {
   public pause(): void {
     if (!this.status.running) return;
 
+    this.scheduler.pause();
+
     this.status.paused = true;
 
     this.publishStatus();
@@ -79,6 +100,8 @@ export class WorkerEngine {
    */
   public resume(): void {
     if (!this.status.running) return;
+
+    this.scheduler.resume();
 
     this.status.paused = false;
 
@@ -119,6 +142,18 @@ export class WorkerEngine {
    */
   public destroy(): void {
     this.stop();
+  }
+
+  /**
+   * Runs on every scheduler tick.
+   */
+  private onTick(): void {
+    const requests = this.requestGenerator.generate(10);
+
+    console.log(
+      `[Worker] Generated ${requests.length} request(s)`,
+      requests
+    );
   }
 
   /**
