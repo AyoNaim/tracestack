@@ -9,7 +9,7 @@ const workerScope = self as DedicatedWorkerGlobalScope;
 const engine = new WorkerEngine(workerScope);
 const dispatcher = new Dispatcher(engine)
 
-self.addEventListener("message", (event: MessageEvent<WorkerCommand>) => {
+workerScope.addEventListener("message", (event: MessageEvent<WorkerCommand>) => {
   dispatcher.dispatch(event.data);
 });
 

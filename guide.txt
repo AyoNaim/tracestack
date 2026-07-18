@@ -1,3 +1,4 @@
+here's the index.ts, engine.ts and the protocol/events.ts file, letss refactor them all as needed:
 // /workers/core/engine.ts
 
 /// <reference lib="webworker" />
@@ -14,8 +15,7 @@ import { RequestGenerator } from "../simulation/request-generator";
 import { ServicePipeline } from "../simulation/service-pipeline";
 import { MessageGenerator } from "../simulation/message-generator";
 import { RingBuffer } from "../storage/ring-buffer";
-import { BatchDispatcher } from "../transport/batch-dispatcher";
-import { WorkerEvent } from "../protocol/events";
+
 
 export class WorkerEngine {
   /**
@@ -46,8 +46,6 @@ export class WorkerEngine {
 
   private readonly ringBuffer = new RingBuffer();
 
-  private readonly batchDispatcher: BatchDispatcher;
-
   /**
    * Controls the heartbeat of the worker.
    */
@@ -57,7 +55,6 @@ export class WorkerEngine {
 
   constructor(worker: DedicatedWorkerGlobalScope) {
     this.worker = worker;
-    this.batchDispatcher = new BatchDispatcher(worker);
   }
 
   /**
@@ -89,7 +86,6 @@ export class WorkerEngine {
   public stop(): void {
     if (!this.status.running) return;
 
-    this.batchDispatcher.flush();
     this.scheduler.stop();
 
     this.status.running = false;
@@ -128,8 +124,6 @@ export class WorkerEngine {
    * Reset internal state.
    */
   public reset(): void {
-    this.ringBuffer.clear();
-    this.batchDispatcher.clear();
     // RingBuffer.reset()
     // Metrics.reset()
     // Scheduler.reset()
@@ -159,8 +153,6 @@ export class WorkerEngine {
    * Shutdown worker.
    */
   public destroy(): void {
-    // this.batchDispatcher.flush();
-    this.batchDispatcher.clear();
     this.stop();
   }
 
@@ -175,8 +167,6 @@ export class WorkerEngine {
     const logs = this.messageGenerator.generate(events);
 
     this.ringBuffer.pushMany(logs);
-
-    this.batchDispatcher.enqueue(logs);
 
     console.log(
       `[Worker] Generated ${requests.length} request(s)`,
@@ -205,7 +195,70 @@ export class WorkerEngine {
   /**
    * Single exit point for all outgoing events.
    */
-  private emit(message: WorkerEvent): void {
+  private emit(message: unknown): void {
     this.worker.postMessage(message);
   }
 }
+
+index.ts:
+/// <reference lib="webworker" />
+
+import { Dispatcher } from "./core/dispatcher";
+import { WorkerEngine } from "./core/engine";
+import type { WorkerCommand } from "./protocol/commands";
+
+
+const workerScope = self as DedicatedWorkerGlobalScope;
+const engine = new WorkerEngine(workerScope);
+const dispatcher = new Dispatcher(engine)
+
+self.addEventListener("message", (event: MessageEvent<WorkerCommand>) => {
+  dispatcher.dispatch(event.data);
+});
+
+engine.ready();
+
+events.ts
+// workers/protocol/events.ts
+// 
+
+import type { LogEntry } from "@/workers/types/log";
+
+import type {
+  MetricsSnapshot,
+  WorkerStatus,
+  WorkerErrorPayload,
+} from "./types";
+
+export interface ReadyEvent {
+  type: "READY";
+}
+
+export interface StatusEvent {
+  type: "STATUS";
+  payload: WorkerStatus;
+}
+
+export interface LogBatchEvent {
+  type: "LOG_BATCH";
+  payload: {
+    logs: LogEntry[];
+  };
+}
+
+export interface MetricsEvent {
+  type: "METRICS";
+  payload: MetricsSnapshot;
+}
+
+export interface ErrorEvent {
+  type: "ERROR";
+  payload: WorkerErrorPayload;
+}
+
+export type WorkerEvent =
+  | ReadyEvent
+  | StatusEvent
+  | LogBatchEvent
+  | MetricsEvent
+  | ErrorEvent;

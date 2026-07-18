@@ -1,7 +1,7 @@
 // workers/protocol/events.ts
 // 
 
-import type { LogEntry } from "@/types/log";
+import type { LogEntry } from "@/workers/types/log";
 
 import type {
   MetricsSnapshot,
@@ -20,17 +20,15 @@ export interface StatusEvent {
 
 export interface LogBatchEvent {
   type: "LOG_BATCH";
-  payload: {
-    logs: LogEntry[];
-  };
+  payload: LogEntry[]
 }
 
-export interface MetricsEvent {
+export interface MetricsUpdateEvent {
   type: "METRICS";
   payload: MetricsSnapshot;
 }
 
-export interface ErrorEvent {
+export interface WorkerErrorEvent {
   type: "ERROR";
   payload: WorkerErrorPayload;
 }
@@ -39,5 +37,5 @@ export type WorkerEvent =
   | ReadyEvent
   | StatusEvent
   | LogBatchEvent
-  | MetricsEvent
-  | ErrorEvent;
+  | MetricsUpdateEvent
+  | WorkerErrorEvent;
