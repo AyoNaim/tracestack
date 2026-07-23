@@ -1,26 +1,115 @@
+@import "../styles/theme.css";
+@import "../styles/utilities.css";
+@import "../styles/animations.css";
+@import "../styles/effects.css";
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  margin: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+
+  background: var(--color-bg);
+
+  color: var(--color-text);
+
+  font-family: var(--font-body);
+
+  text-rendering: optimizeLegibility;
+
+  -webkit-font-smoothing: antialiased;
+
+  -moz-osx-font-smoothing: grayscale;
+
+  overflow: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+
+  background: transparent;
+
+  border: none;
+}
+
+a {
+  color: inherit;
+
+  text-decoration: none;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+
+  max-width: 100%;
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   ROOT
+   ========================================================================== */
+
+#__next {
+  min-height: 100vh;
+}
+
+main {
+  width: 100%;
+
+  height: 100vh;
+
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   TEXT SELECTION
+   ========================================================================== */
+
+::selection {
+  background: var(--color-primary);
+
+  color: var(--color-bg);
+}
+
+/* ==========================================================================
+   FOCUS
+   ========================================================================== */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+
+  outline-offset: 2px;
 }

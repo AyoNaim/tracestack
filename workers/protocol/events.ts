@@ -24,12 +24,12 @@ export interface LogBatchEvent {
 }
 
 export interface MetricsUpdateEvent {
-  type: "METRICS";
+  type: "METRICS_UPDATE";
   payload: MetricsSnapshot;
 }
 
 export interface WorkerErrorEvent {
-  type: "ERROR";
+  type: "WORKER_ERROR";
   payload: WorkerErrorPayload;
 }
 

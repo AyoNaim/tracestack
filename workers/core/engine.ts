@@ -9,28 +9,25 @@ import type {
   WorkerStatus,
 } from "../protocol/types";
 
+import type { WorkerEvent } from "../protocol/events";
+
 import { Scheduler } from "./scheduler";
 import { RequestGenerator } from "../simulation/request-generator";
 import { ServicePipeline } from "../simulation/service-pipeline";
 import { MessageGenerator } from "../simulation/message-generator";
 import { RingBuffer } from "../storage/ring-buffer";
 import { BatchDispatcher } from "../transport/batch-dispatcher";
-import { WorkerEvent } from "../protocol/events";
 
 export class WorkerEngine {
   /**
-   * The DedicatedWorkerGlobalScope ("self").
-   * This is the communication channel back to the UI.
+   * Number of simulated backend requests
+   * generated every scheduler tick.
    */
-  private readonly worker: DedicatedWorkerGlobalScope;
+  private static readonly REQUESTS_PER_TICK = 10;
 
   /**
    * Central runtime state.
-   * Every subsystem reads from here.
    */
-
-  private readonly servicePipeline = new ServicePipeline();
-
   private status: WorkerStatus = {
     running: false,
     paused: false,
@@ -38,30 +35,38 @@ export class WorkerEngine {
   };
 
   /**
-   * Generates simulated backend requests.
+   * Simulation pipeline.
    */
   private readonly requestGenerator = new RequestGenerator();
 
+  private readonly servicePipeline = new ServicePipeline();
+
   private readonly messageGenerator = new MessageGenerator();
 
+  /**
+   * In-memory storage.
+   */
   private readonly ringBuffer = new RingBuffer();
 
+  /**
+   * Responsible for all communication
+   * with the browser thread.
+   */
   private readonly batchDispatcher: BatchDispatcher;
 
   /**
-   * Controls the heartbeat of the worker.
+   * Controls the simulation heartbeat.
    */
   private readonly scheduler = new Scheduler(() => {
     this.onTick();
   });
 
   constructor(worker: DedicatedWorkerGlobalScope) {
-    this.worker = worker;
     this.batchDispatcher = new BatchDispatcher(worker);
   }
 
   /**
-   * Called once after the worker boots.
+   * Worker boot completed.
    */
   public ready(): void {
     this.emit({
@@ -73,7 +78,9 @@ export class WorkerEngine {
    * Begin simulation.
    */
   public start(): void {
-    if (this.status.running) return;
+    if (this.status.running) {
+      return;
+    }
 
     this.status.running = true;
     this.status.paused = false;
@@ -84,13 +91,16 @@ export class WorkerEngine {
   }
 
   /**
-   * Stop everything.
+   * Stop simulation.
    */
   public stop(): void {
-    if (!this.status.running) return;
+    if (!this.status.running) {
+      return;
+    }
+
+    this.scheduler.stop();
 
     this.batchDispatcher.flush();
-    this.scheduler.stop();
 
     this.status.running = false;
     this.status.paused = false;
@@ -99,12 +109,16 @@ export class WorkerEngine {
   }
 
   /**
-   * Pause generation without destroying state.
+   * Pause generation.
    */
   public pause(): void {
-    if (!this.status.running) return;
+    if (!this.status.running || this.status.paused) {
+      return;
+    }
 
     this.scheduler.pause();
+
+    this.batchDispatcher.flush();
 
     this.status.paused = true;
 
@@ -112,10 +126,12 @@ export class WorkerEngine {
   }
 
   /**
-   * Continue after pause.
+   * Resume generation.
    */
   public resume(): void {
-    if (!this.status.running) return;
+    if (!this.status.running || !this.status.paused) {
+      return;
+    }
 
     this.scheduler.resume();
 
@@ -125,15 +141,19 @@ export class WorkerEngine {
   }
 
   /**
-   * Reset internal state.
+   * Reset runtime.
    */
   public reset(): void {
+    this.scheduler.stop();
+
     this.ringBuffer.clear();
+
     this.batchDispatcher.clear();
-    // RingBuffer.reset()
-    // Metrics.reset()
-    // Scheduler.reset()
-    // Simulation.reset()
+
+    this.status.running = false;
+    this.status.paused = false;
+
+    this.publishStatus();
   }
 
   /**
@@ -159,20 +179,30 @@ export class WorkerEngine {
    * Shutdown worker.
    */
   public destroy(): void {
-    // this.batchDispatcher.flush();
-    this.batchDispatcher.clear();
     this.stop();
+
+    this.batchDispatcher.destroy();
+
+    this.ringBuffer.clear();
   }
 
   /**
-   * Runs on every scheduler tick.
+   * Executes one simulation frame.
    */
   private onTick(): void {
-    const requests = this.requestGenerator.generate(10);
+    if (!this.status.running || this.status.paused) {
+      return;
+    }
 
-    const events = this.servicePipeline.process(requests);
-    
-    const logs = this.messageGenerator.generate(events);
+    const requests = this.requestGenerator.generate(
+      WorkerEngine.REQUESTS_PER_TICK
+    );
+
+    const events =
+      this.servicePipeline.process(requests);
+
+    const logs =
+      this.messageGenerator.generate(events);
 
     this.ringBuffer.pushMany(logs);
 
@@ -182,18 +212,20 @@ export class WorkerEngine {
       `[Worker] Generated ${requests.length} request(s)`,
       requests
     );
+
     console.log(
       `[Worker] Processed ${events.length} service event(s)`,
       events
     );
+
     console.log(
-    `[Worker] Generated ${logs.length} log entries`,
-    logs
-  );
+      `[Worker] Generated ${logs.length} log entries`,
+      logs
+    );
   }
 
   /**
-   * Notify UI of current runtime state.
+   * Notify the UI of current runtime state.
    */
   private publishStatus(): void {
     this.emit({
@@ -203,9 +235,9 @@ export class WorkerEngine {
   }
 
   /**
-   * Single exit point for all outgoing events.
+   * Send a typed event to the browser.
    */
-  private emit(message: WorkerEvent): void {
-    this.worker.postMessage(message);
+  private emit(event: WorkerEvent): void {
+    this.batchDispatcher.dispatch(event);
   }
 }

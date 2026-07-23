@@ -1,0 +1,278 @@
+/* ==========================================================================
+   UTILITIES
+   Reusable Cyberpunk Utility Classes
+   ========================================================================== */
+
+/* ==========================================================================
+   PANELS
+   ========================================================================== */
+
+.hud-panel {
+  position: relative;
+
+  background: var(--color-panel);
+
+  border: var(--border-width) solid var(--color-border);
+
+  border-radius: var(--border-radius);
+
+  box-shadow: var(--shadow-panel);
+
+  overflow: hidden;
+}
+
+.hud-panel-hover {
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.hud-panel-hover:hover {
+  background: var(--color-panel-hover);
+
+  border-color: var(--color-border-strong);
+
+  box-shadow:
+    var(--shadow-panel),
+    var(--glow-primary);
+}
+
+/* ==========================================================================
+   PANEL HEADER
+   ========================================================================== */
+
+.hud-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: var(--space-4);
+
+  border-bottom: 1px solid var(--color-border);
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 240, 255, 0.05),
+      transparent
+    );
+}
+
+/* ==========================================================================
+   TERMINAL TEXT
+   ========================================================================== */
+
+.terminal-text {
+  font-family: var(--font-mono);
+
+  font-size: var(--font-size-sm);
+
+  letter-spacing: 0.08em;
+
+  color: var(--color-text-muted);
+
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   HUD TITLES
+   ========================================================================== */
+
+.hud-title {
+  font-family: var(--font-heading);
+
+  font-size: var(--font-size-lg);
+
+  font-weight: var(--font-weight-bold);
+
+  letter-spacing: 0.12em;
+
+  text-transform: uppercase;
+
+  color: var(--color-text);
+}
+
+.hud-subtitle {
+  font-family: var(--font-mono);
+
+  font-size: var(--font-size-xs);
+
+  letter-spacing: 0.15em;
+
+  text-transform: uppercase;
+
+  color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   NEON TEXT
+   ========================================================================== */
+
+.neon-text {
+  color: var(--color-primary);
+
+  text-shadow:
+    0 0 6px rgba(0, 240, 255, 0.45),
+    0 0 14px rgba(0, 240, 255, 0.20);
+}
+
+.success-text {
+  color: var(--color-success);
+}
+
+.warning-text {
+  color: var(--color-warning);
+}
+
+.danger-text {
+  color: var(--color-danger);
+}
+
+/* ==========================================================================
+   HUD DIVIDER
+   ========================================================================== */
+
+.hud-divider {
+  width: 100%;
+
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      var(--color-primary),
+      transparent
+    );
+
+  opacity: 0.35;
+}
+
+/* ==========================================================================
+   GRID BACKGROUND
+   ========================================================================== */
+
+.hud-grid {
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,var(--grid-line-opacity)) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,var(--grid-line-opacity)) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    var(--grid-size)
+    var(--grid-size);
+}
+
+/* ==========================================================================
+   CYBERPUNK SCROLLBAR
+   ========================================================================== */
+
+.hud-scrollbar {
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    var(--color-primary)
+    transparent;
+}
+
+.hud-scrollbar::-webkit-scrollbar {
+  width: 8px;
+
+  height: 8px;
+}
+
+.hud-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hud-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+
+  border-radius: 999px;
+}
+
+.hud-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-soft);
+}
+
+/* ==========================================================================
+   GLASS OVERLAY
+   ========================================================================== */
+
+.hud-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.03),
+      transparent 35%
+    );
+}
+
+/* ==========================================================================
+   ABSOLUTE FILL
+   ========================================================================== */
+
+.absolute-fill {
+  position: absolute;
+
+  inset: 0;
+}
+
+/* ==========================================================================
+   FLEX HELPERS
+   ========================================================================== */
+
+.flex-center {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   USER SELECTION
+   ========================================================================== */
+
+.no-select {
+  user-select: none;
+
+  -webkit-user-select: none;
+}
+
+/* ==========================================================================
+   MONOSPACE NUMBERS
+   ========================================================================== */
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

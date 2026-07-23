@@ -2,7 +2,11 @@
 
 /// <reference lib="webworker" />
 
-import { LogBatchEvent } from "../protocol/events";
+import type {
+  LogBatchEvent,
+  WorkerEvent,
+} from "../protocol/events";
+
 import type { LogEntry } from "../types/log";
 
 export class BatchDispatcher {
@@ -21,12 +25,38 @@ export class BatchDispatcher {
    */
   private readonly batchSize: number;
 
+  /**
+   * Maximum time (ms) before forcing a flush.
+   */
+  private readonly flushInterval: number;
+
+  /**
+   * Timer responsible for periodic flushing.
+   */
+  private readonly timer: number;
+
   constructor(
     worker: DedicatedWorkerGlobalScope,
-    batchSize = 250
+    batchSize = 250,
+    flushInterval = 100
   ) {
     this.worker = worker;
     this.batchSize = batchSize;
+    this.flushInterval = flushInterval;
+
+    this.timer = self.setInterval(() => {
+      this.flush();
+    }, this.flushInterval);
+  }
+
+  /**
+   * Send a single worker event immediately.
+   *
+   * Used for READY, STATUS, ERROR,
+   * METRICS and any future control events.
+   */
+  public dispatch(event: WorkerEvent): void {
+    this.worker.postMessage(event);
   }
 
   /**
@@ -49,20 +79,30 @@ export class BatchDispatcher {
     }
 
     const event: LogBatchEvent = {
-        type: "LOG_BATCH",
-        payload: this.queue
-    } 
+      type: "LOG_BATCH",
+      payload: [...this.queue],
+    };
 
-    this.worker.postMessage(event);
+    this.dispatch(event);
 
-    this.queue = [];
+    this.queue.length = 0;
+  }
+
+  /**
+   * Stop the timer.
+   * Called when the worker shuts down.
+   */
+  public destroy(): void {
+    this.flush();
+
+    clearInterval(this.timer);
   }
 
   /**
    * Remove pending logs.
    */
   public clear(): void {
-    this.queue = [];
+    this.queue.length = 0;
   }
 
   /**
