@@ -12,8 +12,7 @@ export type LogLevel =
   | "debug"
   | "info"
   | "warn"
-  | "error"
-  | "fatal";
+  | "error";
 
 export type SortDirection = "asc" | "desc";
 
@@ -40,6 +39,10 @@ export interface MetricsSnapshot {
   errorRate: number;
   averageLatency: number;
   queueDepth: number;
+
+  droppedEvents: number;
+  workerFps: number;
+  uiFps: number;
 }
 
 export interface WorkerErrorPayload {

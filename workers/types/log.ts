@@ -32,6 +32,12 @@ export interface LogEntry {
   timestamp: number;
 
   /**
+   * Actual display time.
+   */
+
+  displayTime: string;
+
+  /**
    * Severity.
    */
   level: LogLevel;
